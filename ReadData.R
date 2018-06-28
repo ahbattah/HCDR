@@ -11,3 +11,5 @@ pc_balance <- read_csv("F:\\R_projects\\HomeCredit_files\\POS_CASH_balance.csv")
 previous <- read_csv("F:\\R_projects\\HomeCredit_files\\previous_application.csv")
 train <- read_csv("F:\\R_projects\\HomeCredit_files\\application_train.csv") 
 test <- read_csv("F:\\R_projects\\HomeCredit_files\\application_test.csv")
+
+#
