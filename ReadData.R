@@ -1,7 +1,7 @@
 
 # Read data
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(tidyverse)
+pacman::p_load(tidyverse, dplyr)
 
 bureau_balance <- read_csv("F:\\R_projects\\HomeCredit_files\\bureau_balance.csv") 
 bureau <- read_csv("F:\\R_projects\\HomeCredit_files\\bureau.csv")
@@ -12,4 +12,11 @@ previous <- read_csv("F:\\R_projects\\HomeCredit_files\\previous_application.csv
 train <- read_csv("F:\\R_projects\\HomeCredit_files\\application_train.csv") 
 test <- read_csv("F:\\R_projects\\HomeCredit_files\\application_test.csv")
 
-#
+# NA count and percentage
+na_count <- sapply(train, function(x) sum(length(which(is.na(x)))))
+na_count <- data.frame(na_count)
+na_percentage <- sapply(train, function(x) 100 * sum(length(which(is.na(x)))) 
+                        / nrow(train))
+
+na_count$percentage <- na_percentage
+
