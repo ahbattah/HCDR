@@ -13,6 +13,7 @@ previous <- read_csv("F:\\R_projects\\HomeCredit_files\\previous_application.csv
 train <- read_csv("F:\\R_projects\\HomeCredit_files\\application_train.csv") 
 test <- read_csv("F:\\R_projects\\HomeCredit_files\\application_test.csv")
 
+
 # NA count and percentage
 # na_count <- sapply(train, function(x) sum(length(which(is.na(x)))))
 # na_percentage <- sapply(train, function(x) format(100 * sum(length(which(is.na(x)))) 

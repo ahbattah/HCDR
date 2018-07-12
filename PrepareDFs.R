@@ -5,8 +5,8 @@ fn <- funs(mean, sd, min, max, sum, n_distinct, .args = list(na.rm = TRUE))
 # Bureau DFs
 sum_bbalance <- bureau_balance %>% 
   mutate_if(is.character, funs(factor(.) %>% as.integer)) %>% 
-  group_by(SK_ID_BUREAU) %>% 
-  summarise_all(fn)
+  group_by(SK_ID_BUREAU) 
+  #summarise_all(fn)
 
 remove(bureau_balance)
 gc()
@@ -75,7 +75,7 @@ gc()
 
 # Target variable
 target <- train$TARGET
-indexes <- 1:nrow(train)
+train_indexes <- 1:nrow(train)
 
 # Full data
 full_df <- train %>% 
@@ -94,15 +94,13 @@ remove(sum_bureau, sum_cc_balance, sum_payments,
        sum_pc_balance, sum_prev)
 
 # Data partrition
-dtest <- xgb.DMatrix(full_df[-indexes, ]) 
-full_df <- full_df[indexes, ]
-indexes <- caret::createDataPartition(target, p = .7, list = FALSE)  %>% 
+dtest <- xgb.DMatrix(full_df[-train_indexes, ])
+full_df <- full_df[train_indexes, ]
+train_indexes <- caret::createDataPartition(target, p = .7, list = FALSE)  %>%
   c()
-dtrain <- xgb.DMatrix(full_df[indexes, ], label = target[indexes])
-dval <-   xgb.DMatrix(full_df[-indexes, ], label = target[-indexes])
+dtrain <- xgb.DMatrix(full_df[train_indexes, ], label = target[train_indexes])
+dval <-   xgb.DMatrix(full_df[-train_indexes, ], label = target[-train_indexes])
   
-
-
 
 
 
