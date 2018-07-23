@@ -29,8 +29,8 @@ rm(na_count, na_percentage)
 bureau_full$DAYS_CREDIT_ENDDATE[is.na(bureau_full$DAYS_CREDIT_ENDDATE)] <- 
   median(bureau_full$DAYS_CREDIT_ENDDATE, na.rm = TRUE)
 
-# bureau_full$AMT_CREDIT_SUM[is.na(bureau_full$AMT_CREDIT_SUM)] <- mean(
-#   bureau_full$AMT_CREDIT_SUM, na.rm = TRUE)
+bureau_full$AMT_CREDIT_SUM[is.na(bureau_full$AMT_CREDIT_SUM)] <- median(
+   bureau_full$AMT_CREDIT_SUM, na.rm = TRUE)
 
 bureau_full$MONTHS_BALANCE[is.na(bureau_full$MONTHS_BALANCE)] <- 
   median(bureau_full$MONTHS_BALANCE, na.rm = TRUE)
@@ -45,3 +45,5 @@ bureau_full <- bureau_full %>%
   select(-c(DAYS_ENDDATE_FACT, AMT_CREDIT_MAX_OVERDUE,
                          AMT_CREDIT_SUM_DEBT, AMT_CREDIT_SUM_LIMIT,
                          AMT_ANNUITY))
+
+remove(bureau_na)
