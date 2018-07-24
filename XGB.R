@@ -101,17 +101,16 @@ dtrain <- xgb.DMatrix(full_df[train_indexes, ], label = target[train_indexes])
 dval <-   xgb.DMatrix(full_df[-train_indexes, ], label = target[-train_indexes])
 cols <- colnames(full_df)  
 
-p <- list(booster = "gbtree",
-          eval_metric = "auc",nrounds = 2000, nfold = 10,
-          objective = "binary:logistic", eta = 0.03,
-          max_depth = 10, early_stopping_rounds = 10,
-          verbose = 0)
+p <- list(objective = "binary:logistic", eta = 0.03,
+          max_depth = 10, nthread = 10)
 
 
 set.seed(1234)
 cv_train <- xgb.cv(data = dtrain, params = p, nfold = 2,
-                   nrounds = 4)
+                   nrounds = 4, 
+                   #print_every_n = 50,
+                   metrics = "auc", early_stopping_rounds = 100)
 
-m_xgb <- xgb.train(p, dtrain, p$nrounds, list(val = dval), print_every_n = 50, early_stopping_rounds = 300)
+m_xgb <- xgb.train(p, dtrain, nrounds = 2000, n)
   
 
