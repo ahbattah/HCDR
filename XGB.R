@@ -1,11 +1,11 @@
 
 # Functions to be applied
-fn <- funs(mean, sd, min, max, sum, n_distinct, .args = list(na.rm = TRUE))
+fn <- funs(mean, median, sd, sum, n_distinct, .args = list(na.rm = TRUE))
 
 # Bureau DFs
 sum_bbalance <- bureau_balance %>%
   mutate_if(is.character, funs(factor(.) %>% as.integer)) %>%
-  group_by(SK_ID_BUREAU)
+  group_by(SK_ID_BUREAU) %>% 
   summarise_all(fn)
 
 remove(bureau_balance)
@@ -20,6 +20,10 @@ sum_bureau <- bureau %>%
 
 remove(bureau, sum_bbalance)
 gc()
+
+# Remove variables with missing data > 60%
+sum_bureau <- sum_bureau %>% 
+  select(-c(AMT_ANNUITY_sd, AMT_ANNUITY_mean))
 
 # # Credit card
 sum_cc_balance <- cc_balance %>%
@@ -71,6 +75,12 @@ sum_prev <- previous %>%
 
 remove(previous)
 gc()
+
+# Remove variables with missing data > 60%
+sum_prev <- sum_prev %>% 
+  select(-c(DAYS_FIRST_DRAWING_sd, RATE_INTEREST_PRIMARY_sd,
+            RATE_INTEREST_PRIVILEGED_sd, RATE_INTEREST_PRIMARY_mean,
+            RATE_INTEREST_PRIVILEGED_mean, DAYS_FIRST_DRAWING_mean))
 
 # Target variable
 target <- train$TARGET
