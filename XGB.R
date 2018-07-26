@@ -9,7 +9,6 @@ sum_bbalance <- bureau_balance %>%
   summarise_all(fn)
 
 remove(bureau_balance)
-gc()
 
 sum_bureau <- bureau %>%
   left_join(sum_bbalance, by = "SK_ID_BUREAU") %>%
@@ -19,11 +18,14 @@ sum_bureau <- bureau %>%
   summarise_all(fn)
 
 remove(bureau, sum_bbalance)
-gc()
 
 # Remove variables with missing data > 60%
 sum_bureau <- sum_bureau %>% 
-  select(-c(AMT_ANNUITY_sd, AMT_ANNUITY_mean))
+  select(-c(AMT_ANNUITY_sd, MONTHS_BALANCE_sd_sd, STATUS_sd_sd,
+            MONTHS_BALANCE_mean_sd, STATUS_mean_sd, MONTHS_BALANCE_median_sd,
+            STATUS_median_sd, MONTHS_BALANCE_sum_sd, STATUS_sum_sd,
+            MONTHS_BALANCE_n_distinct_sd, STATUS_n_distinct_sd,
+            AMT_ANNUITY_mean, AMT_ANNUITY_median))
 
 # # Credit card
 sum_cc_balance <- cc_balance %>%
@@ -33,7 +35,6 @@ sum_cc_balance <- cc_balance %>%
   summarise_all(fn)
 
 remove(cc_balance)
-gc()
 
 # # Installments payments
 sum_payments <- payments %>%
@@ -48,7 +49,6 @@ sum_payments <- payments %>%
   summarise_all(fn)
 
 remove(payments)
-gc()
 
 # # POS CASH balance
 sum_pc_balance <- pc_balance %>%
@@ -58,7 +58,6 @@ sum_pc_balance <- pc_balance %>%
   summarise_all(fn)
 
 remove(pc_balance);
-gc()
 
 # # Previous applicatio
 sum_prev <- previous %>%
@@ -74,13 +73,14 @@ sum_prev <- previous %>%
   summarise_all(fn)
 
 remove(previous)
-gc()
 
 # Remove variables with missing data > 60%
 sum_prev <- sum_prev %>% 
   select(-c(DAYS_FIRST_DRAWING_sd, RATE_INTEREST_PRIMARY_sd,
             RATE_INTEREST_PRIVILEGED_sd, RATE_INTEREST_PRIMARY_mean,
-            RATE_INTEREST_PRIVILEGED_mean, DAYS_FIRST_DRAWING_mean))
+            RATE_INTEREST_PRIVILEGED_mean, DAYS_FIRST_DRAWING_mean,
+            RATE_INTEREST_PRIMARY_median, RATE_INTEREST_PRIVILEGED_median,
+            DAYS_FIRST_DRAWING_median))
 
 # Target variable
 target <- train$TARGET
@@ -96,7 +96,21 @@ full_df <- train %>%
   left_join(sum_pc_balance, by = "SK_ID_CURR") %>% 
   left_join(sum_prev, by = "SK_ID_CURR") %>%
   select(-SK_ID_CURR) %>% 
-  mutate_if(is.character, funs(factor(.) %>% as.integer())) %>% 
+  mutate_if(is.character, funs(factor(.) %>% as.integer())) 
+
+# Remove commulative features
+comm_cols <- which(grepl("mean_|median_|sd_|sum_|n_distinct_", names(full_df)))
+full_df <- full_df %>% 
+  select(-comm_cols)
+
+# Remove variables with missing data > 60%
+cols_to_remove <- df_na %>% filter(na_percentage >= 60) %>% 
+                              select(rows)
+cols_to_remove <- as.vector(cols_to_remove[['rows']])
+full_df <- full_df[, names(full_df)[!(names(full_df) %in% cols_to_remove)]]
+
+# full_df to matrix
+full_df <- full_df %>% 
   data.matrix()
 
 remove(sum_bureau, sum_cc_balance, sum_payments,
