@@ -151,8 +151,8 @@ cv_train <- xgb.cv(data = full_df_cv, params = p, nfold = 10,
 # [59]	train-auc:0.857876+0.001157	test-auc:0.771599+0.004953
 
 set.seed(1234)
-xgb_train <- xgb.cv(data = dtrain, params = p,
-                   nrounds = 2000, 
+xgb_train <- xgb.train(data = dtrain, params = p,
+                   nrounds = 2000, metrics = "auc",
                    print_every_n = 25,
-                   early_stopping_rounds = 250, 
+                   early_stopping_rounds = 300, 
                    list(val = dval))
