@@ -150,9 +150,21 @@ cv_train <- xgb.cv(data = full_df_cv, params = p, nfold = 10,
 # Stopping. Best iteration:
 # [59]	train-auc:0.857876+0.001157	test-auc:0.771599+0.004953
 
+p <- list(booster = "gbtree", objective = "binary:logistic", eta = 0.3,
+          max_depth = 10, min_child_weight = 1, gamma = 0,
+          subsample = 1, nthread = 4, colsample_bytree = 1)
+
 set.seed(1234)
 xgb_train <- xgb.train(data = dtrain, params = p,
                    nrounds = 2000, metrics = "auc",
                    print_every_n = 25,
                    early_stopping_rounds = 300, 
                    list(val = dval))
+
+
+# prediction
+read_csv("F:\\R_projects\\HomeCredit_files\\sample_submission.csv") %>%  
+  mutate(SK_ID_CURR = as.integer(SK_ID_CURR),
+         TARGET = predict(xgb_train, dtest)) %>%
+  write_csv(paste0("tidy_xgb_", round(xgb_train$best_score, 4), ".csv"))
+
