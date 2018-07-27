@@ -1,6 +1,6 @@
 
 # Functions to be applied
-fn <- funs(mean, median, sd, sum, n_distinct, .args = list(na.rm = TRUE))
+fn <- funs(mean, sd, sum, n_distinct, .args = list(na.rm = TRUE))
 
 # Bureau DFs
 sum_bbalance <- bureau_balance %>%
@@ -22,10 +22,10 @@ remove(bureau, sum_bbalance)
 # Remove variables with missing data > 60%
 sum_bureau <- sum_bureau %>% 
   select(-c(AMT_ANNUITY_sd, MONTHS_BALANCE_sd_sd, STATUS_sd_sd,
-            MONTHS_BALANCE_mean_sd, STATUS_mean_sd, MONTHS_BALANCE_median_sd,
-            STATUS_median_sd, MONTHS_BALANCE_sum_sd, STATUS_sum_sd,
+            MONTHS_BALANCE_mean_sd, STATUS_mean_sd,
+            MONTHS_BALANCE_sum_sd, STATUS_sum_sd,
             MONTHS_BALANCE_n_distinct_sd, STATUS_n_distinct_sd,
-            AMT_ANNUITY_mean, AMT_ANNUITY_median))
+            AMT_ANNUITY_mean))
 
 # # Credit card
 sum_cc_balance <- cc_balance %>%
@@ -78,9 +78,7 @@ remove(previous)
 sum_prev <- sum_prev %>% 
   select(-c(DAYS_FIRST_DRAWING_sd, RATE_INTEREST_PRIMARY_sd,
             RATE_INTEREST_PRIVILEGED_sd, RATE_INTEREST_PRIMARY_mean,
-            RATE_INTEREST_PRIVILEGED_mean, DAYS_FIRST_DRAWING_mean,
-            RATE_INTEREST_PRIMARY_median, RATE_INTEREST_PRIVILEGED_median,
-            DAYS_FIRST_DRAWING_median))
+            RATE_INTEREST_PRIVILEGED_mean, DAYS_FIRST_DRAWING_mean))
 
 # Target variable
 target <- train$TARGET
@@ -99,7 +97,7 @@ full_df <- train %>%
   mutate_if(is.character, funs(factor(.) %>% as.integer())) 
 
 # Remove commulative features
-comm_cols <- which(grepl("mean_|median_|sd_|sum_|n_distinct_", names(full_df)))
+comm_cols <- which(grepl("mean_|sd_|sum_|n_distinct_", names(full_df)))
 full_df <- full_df %>% 
   select(-comm_cols)
 
@@ -131,7 +129,7 @@ full_df_cv <- xgb.DMatrix(full_df, label = target[1:nrow(train)])
 
 p <- list(booster = "gbtree", objective = "binary:logistic", eta = 0.3,
           max_depth = 6, min_child_weight = 1, gamma = 0,
-          subsample = 1, nthread = 10, colsample_bytree = 1)
+          subsample = 1, nthread = 4, colsample_bytree = 1)
 
 
 set.seed(1234)
@@ -140,5 +138,21 @@ cv_train <- xgb.cv(data = full_df_cv, params = p, nfold = 10,
                    print_every_n = 50,
                    metrics = "auc", early_stopping_rounds = 200)
 
-  
+# [1]	train-auc:0.721381+0.001328	test-auc:0.711633+0.006492 
+# Multiple eval metrics are present. Will use test_auc for early stopping.
+# Will train until test_auc hasn't improved in 200 rounds.
+# 
+# [51]	train-auc:0.849866+0.001158	test-auc:0.771412+0.004897 
+# [101]	train-auc:0.889586+0.001620	test-auc:0.769302+0.005324 
+# [151]	train-auc:0.916306+0.001613	test-auc:0.766152+0.005185 
+# [201]	train-auc:0.937066+0.001706	test-auc:0.763114+0.004484 
+# [251]	train-auc:0.953375+0.001389	test-auc:0.760554+0.004717 
+# Stopping. Best iteration:
+# [59]	train-auc:0.857876+0.001157	test-auc:0.771599+0.004953
 
+set.seed(1234)
+xgb_train <- xgb.cv(data = dtrain, params = p,
+                   nrounds = 2000, 
+                   print_every_n = 25,
+                   early_stopping_rounds = 250, 
+                   list(val = dval))
