@@ -1,6 +1,6 @@
 
 # Functions to be applied
-fn <- funs(mean, sd, sum, n_distinct, .args = list(na.rm = TRUE))
+fn <- funs(mean, sum, n_distinct, .args = list(na.rm = TRUE))
 
 # Bureau DFs
 sum_bbalance <- bureau_balance %>%
