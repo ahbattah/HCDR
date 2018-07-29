@@ -11,7 +11,7 @@ sum_bbalance <- bureau_balance %>%
 remove(bureau_balance)
 
 sum_bureau <- bureau %>%
-  left_join(sum_bbalance, by = "SK_ID_BUREAU") %>%
+  #left_join(sum_bbalance, by = "SK_ID_BUREAU") %>%
   select(-SK_ID_BUREAU) %>%
   mutate_if(is.character, funs(factor(.) %>% as.integer)) %>%
   group_by(SK_ID_CURR) %>%
@@ -20,12 +20,12 @@ sum_bureau <- bureau %>%
 remove(bureau, sum_bbalance)
 
 # Remove variables with missing data > 60%
-sum_bureau <- sum_bureau %>% 
-  select(-c(AMT_ANNUITY_sd, MONTHS_BALANCE_sd_sd, STATUS_sd_sd,
-            MONTHS_BALANCE_mean_sd, STATUS_mean_sd,
-            MONTHS_BALANCE_sum_sd, STATUS_sum_sd,
-            MONTHS_BALANCE_n_distinct_sd, STATUS_n_distinct_sd,
-            AMT_ANNUITY_mean))
+# sum_bureau <- sum_bureau %>% 
+#   select(-c(AMT_ANNUITY_sd, MONTHS_BALANCE_sd_sd, STATUS_sd_sd,
+#             MONTHS_BALANCE_mean_sd, STATUS_mean_sd,
+#             MONTHS_BALANCE_sum_sd, STATUS_sum_sd,
+#             MONTHS_BALANCE_n_distinct_sd, STATUS_n_distinct_sd,
+#             AMT_ANNUITY_mean))
 
 # # Credit card
 sum_cc_balance <- cc_balance %>%
@@ -75,10 +75,10 @@ sum_prev <- previous %>%
 remove(previous)
 
 # Remove variables with missing data > 60%
-sum_prev <- sum_prev %>% 
-  select(-c(DAYS_FIRST_DRAWING_sd, RATE_INTEREST_PRIMARY_sd,
-            RATE_INTEREST_PRIVILEGED_sd, RATE_INTEREST_PRIMARY_mean,
-            RATE_INTEREST_PRIVILEGED_mean, DAYS_FIRST_DRAWING_mean))
+# sum_prev <- sum_prev %>% 
+#   select(-c(DAYS_FIRST_DRAWING_sd, RATE_INTEREST_PRIMARY_sd,
+#             RATE_INTEREST_PRIVILEGED_sd, RATE_INTEREST_PRIMARY_mean,
+#             RATE_INTEREST_PRIVILEGED_mean, DAYS_FIRST_DRAWING_mean))
 
 # Target variable
 target <- train$TARGET
@@ -97,15 +97,18 @@ full_df <- train %>%
   mutate_if(is.character, funs(factor(.) %>% as.integer())) 
 
 # Remove commulative features
-comm_cols <- which(grepl("mean_|sd_|sum_|n_distinct_", names(full_df)))
+comm_cols <- which(grepl("mean_|sum_|n_distinct_", names(full_df)))
 full_df <- full_df %>% 
   select(-comm_cols)
 
+full_df <- full_df %>% 
+  select(c(imp_cols))
+
 # Remove variables with missing data > 60%
-cols_to_remove <- df_na %>% filter(na_percentage >= 60) %>% 
-                              select(rows)
-cols_to_remove <- as.vector(cols_to_remove[['rows']])
-full_df <- full_df[, names(full_df)[!(names(full_df) %in% cols_to_remove)]]
+# cols_to_remove <- df_na %>% filter(na_percentage >= 60) %>% 
+#                               select(rows)
+# cols_to_remove <- as.vector(cols_to_remove[['rows']])
+# full_df <- full_df[, names(full_df)[!(names(full_df) %in% cols_to_remove)]]
 
 # full_df to matrix
 full_df <- full_df %>% 
@@ -117,7 +120,7 @@ remove(sum_bureau, sum_cc_balance, sum_payments,
 # Data partrition
 dtest <- xgb.DMatrix(full_df[-train_indexes, ])
 full_df <- full_df[train_indexes, ]
-train_indexes <- caret::createDataPartition(target, p = .7, list = FALSE)  %>%
+train_indexes <- caret::createDataPartition(target, p = .9, list = FALSE)  %>%
   c()
 dtrain <- xgb.DMatrix(full_df[train_indexes, ], label = target[train_indexes])
 dval <-   xgb.DMatrix(full_df[-train_indexes, ], label = target[-train_indexes])
@@ -125,18 +128,18 @@ cols <- colnames(full_df)
 
 
 # Trying cross-validation
-full_df_cv <- xgb.DMatrix(full_df, label = target[1:nrow(train)])
-
-p <- list(booster = "gbtree", objective = "binary:logistic", eta = 0.3,
-          max_depth = 6, min_child_weight = 1, gamma = 0,
-          subsample = 1, nthread = 4, colsample_bytree = 1)
-
-
-set.seed(1234)
-cv_train <- xgb.cv(data = full_df_cv, params = p, nfold = 10,
-                   nrounds = 2000,
-                   print_every_n = 50,
-                   metrics = "auc", early_stopping_rounds = 200)
+# full_df_cv <- xgb.DMatrix(full_df, label = target[1:nrow(train)])
+# 
+# p <- list(booster = "gbtree", objective = "binary:logistic", eta = 0.3,
+#           max_depth = 6, min_child_weight = 1, gamma = 0,
+#           subsample = 1, nthread = 4, colsample_bytree = 1)
+# 
+# 
+# set.seed(1234)
+# cv_train <- xgb.cv(data = full_df_cv, params = p, nfold = 10,
+#                    nrounds = 2000,
+#                    print_every_n = 50,
+#                    metrics = "auc", early_stopping_rounds = 200)
 
 # [1]	train-auc:0.721381+0.001328	test-auc:0.711633+0.006492 
 # Multiple eval metrics are present. Will use test_auc for early stopping.
@@ -150,17 +153,19 @@ cv_train <- xgb.cv(data = full_df_cv, params = p, nfold = 10,
 # Stopping. Best iteration:
 # [59]	train-auc:0.857876+0.001157	test-auc:0.771599+0.004953
 
-p <- list(booster = "gbtree", objective = "binary:logistic", eta = 0.3,
-          max_depth = 10, min_child_weight = 1, gamma = 0,
+p <- list(booster = "gbtree", objective = "binary:logistic", eta = 0.01,
+          max_depth = 8, min_child_weight = 1, gamma = 0,
           subsample = 1, nthread = 4, colsample_bytree = 1)
 
 set.seed(1234)
-xgb_train <- xgb.train(data = dtrain, params = p,
+xgb_train_eta001 <- xgb.train(data = dtrain, params = p,
                    nrounds = 2000, metrics = "auc",
                    print_every_n = 25,
                    early_stopping_rounds = 300, 
                    list(val = dval))
 
+xgb.importance(cols, model = xgb_train) %>% 
+  xgb.plot.importance(top_n = 30)
 
 # prediction
 read_csv("F:\\R_projects\\HomeCredit_files\\sample_submission.csv") %>%  
