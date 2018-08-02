@@ -120,7 +120,7 @@ full_df <- full_df %>%
 
 # Data partrition
 dtest <- xgb.DMatrix(full_df[-train_indexes, ])
-full_df <- full_df[train_indexes, ]
+full_df <- full_df2[train_indexes, ]
 train_indexes <- caret::createDataPartition(target, p = .9, list = FALSE)  %>%
   c()
 dtrain <- xgb.DMatrix(full_df[train_indexes, ], label = target[train_indexes])

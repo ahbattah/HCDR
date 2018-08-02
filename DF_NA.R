@@ -10,4 +10,3 @@ df_na <- cbind(rows = rownames(df_na), df_na)
 row.names(df_na) <- NULL
 
 rm(na_count, na_percentage)
-
