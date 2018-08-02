@@ -47,3 +47,5 @@ bureau_full <- bureau_full %>%
                          AMT_ANNUITY))
 
 remove(bureau_na)
+
+#
