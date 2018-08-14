@@ -125,7 +125,6 @@ train_treatZ <- designTreatmentsZ(train_xgb, vars)
 
 (test_prepZ <- prepare(train_treatZ, test_xgb, varRestriction = newvarsZ))
 
-set.seed(1234)
 # cv_z <- xgb.cv(data = as.matrix(train_prepZ), label = train_xgb$TARGET,
 #                nrounds = 100, nfold = 5, objective = "reg:linear",
 #                eta = 0.3, max_depth = 10, early_stopping_rounds = 10,
@@ -137,11 +136,12 @@ set.seed(1234)
 #   summarize(ntrees.train = which.min(train_rmse_mean), 
 #             ntrees.test  = which.min(test_rmse_mean))
 
-p_xgb <- list(booster = "gbtree", objective = "binary:logistic", eta = 0.02,
+p_xgb <- list(booster = "gbtree", objective = "binary:logistic", eta = 0.3,
           max_depth = 8, min_child_weight = 1, gamma = 0,
-          subsample = 0.8, nthread = 4, colsample_bytree = 1)
+          subsample = 1, nthread = 4, colsample_bytree = 1)
 
 # Model
+set.seed(1234)
 model_xgb_z <- xgboost(data = as.matrix(train_prepZ), params = p_xgb,
                        label = train_xgb$TARGET,
                        nrounds = 2000, metrics = "auc",
